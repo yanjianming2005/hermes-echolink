@@ -1,0 +1,26 @@
+export const LIMITS = {
+  MAX_MESSAGE_LENGTH: 5000,
+  MAX_SENDER_NAME_LENGTH: 100,
+  MAX_SENDER_ID_LENGTH: 100,
+  MAX_CHAT_ID_LENGTH: 100,
+  MAX_WEBSOCKET_MESSAGE_SIZE: 64 * 1024, // 64KB
+  MAX_GATEWAY_CLIENTS: 1000,
+  MAX_MESSAGES_PER_CHAT: 1000,
+  MAX_EVENTS: 10000,
+} as const;
+
+export const TIMEOUTS = {
+  HERMES_API_TIMEOUT_MS: 30000,
+  GRACEFUL_SHUTDOWN_MS: 5000,
+  HEARTBEAT_INTERVAL_MS: 30000,
+} as const;
+
+export const TTL = {
+  MESSAGE_TTL_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
+  CLEANUP_INTERVAL_MS: 60 * 60 * 1000, // 1 hour
+} as const;
+
+export const RATE_LIMIT = {
+  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  MAX_REQUESTS: 100, // per window
+} as const;

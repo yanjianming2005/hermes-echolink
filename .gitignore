@@ -1,0 +1,14 @@
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.env
+.DS_Store
+
+# npm
+npm-debug.log*
+package-lock.json
+
+# pnpm
+pnpm-debug.log*
+.pnpm-store/

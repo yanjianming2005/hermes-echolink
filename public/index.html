@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EchoLink - Chat with Hermes</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f8f8;
+      --bg-tertiary: #f0f0f0;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-tertiary: #999999;
+      --border-color: #e5e5e5;
+      --sidebar-bg: #f9f9f9;
+      --sidebar-hover: #f0f0f0;
+      --sidebar-active: #e8e8e8;
+      --user-message-bg: #2f2f2f;
+      --bot-message-bg: #f4f4f4;
+      --accent-color: #ab68ff;
+      --success-color: #10a37f;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --thinking-bg: #fffbeb;
+      --thinking-border: #fbbf24;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background: var(--bg-secondary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .header-left h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .header-left .status {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status.connected .status-dot { background: var(--success-color); }
+    .status.disconnected .status-dot { background: var(--danger-color); }
+
+    .header-right {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .clear-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .clear-btn:hover {
+      background: var(--bg-secondary);
+      border-color: var(--text-tertiary);
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      max-width: 100%;
+      width: 100%;
+      margin: 0 auto;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      padding: 0.625rem 1rem;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .new-chat-btn:hover {
+      background: var(--bg-secondary);
+    }
+
+    .sessions-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .sessions-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sessions-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sessions-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .sessions-list::-webkit-scrollbar-thumb:hover {
+      background: var(--text-tertiary);
+    }
+
+    .session-item {
+      padding: 0.625rem 0.75rem;
+      margin-bottom: 0.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .session-item:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .session-item.active {
+      background: var(--sidebar-active);
+    }
+
+    .session-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .session-item-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-item-preview {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 0.125rem;
+    }
+
+    .session-item-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .session-item:hover .session-item-actions {
+      opacity: 1;
+    }
+
+    .session-item-edit,
+    .session-item-delete {
+      padding: 0.25rem 0.375rem;
+      background: transparent;
+      border: none;
+      border-radius: 0.25rem;
+      color: var(--text-tertiary);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+
+    .session-item-edit:hover {
+      background: var(--bg-tertiary);
+      color: var(--accent-color);
+    }
+
+    .session-item-delete:hover {
+      background: var(--bg-tertiary);
+      color: var(--danger-color);
+    }
+
+    .session-title-input {
+      width: 100%;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--accent-color);
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      outline: none;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      min-width: 0;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 48rem;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: var(--text-tertiary);
+    }
+
+    .message {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message.bot {
+      flex-direction: row;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .message.user .message-avatar {
+      background: var(--user-message-bg);
+      color: white;
+    }
+
+    .message.bot .message-avatar {
+      background: linear-gradient(135deg, #ab68ff 0%, #8b5cf6 100%);
+      color: white;
+    }
+
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message-bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 1.25rem;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 0.9375rem;
+    }
+
+    .message.user .message-bubble {
+      background: var(--user-message-bg);
+      color: white;
+      border-bottom-right-radius: 0.375rem;
+    }
+
+    .message.bot .message-bubble {
+      background: var(--bot-message-bg);
+      color: var(--text-primary);
+      border-bottom-left-radius: 0.375rem;
+    }
+
+    .message-bubble h1,
+    .message-bubble h2,
+    .message-bubble h3,
+    .message-bubble h4,
+    .message-bubble h5,
+    .message-bubble h6 {
+      margin: 0.5em 0;
+      font-weight: 600;
+    }
+
+    .message-bubble h1 { font-size: 1.5em; }
+    .message-bubble h2 { font-size: 1.3em; }
+    .message-bubble h3 { font-size: 1.1em; }
+    .message-bubble h4 { font-size: 1em; }
+    .message-bubble h5 { font-size: 0.9em; }
+    .message-bubble h6 { font-size: 0.85em; }
+
+    .message-bubble p {
+      margin: 0.5em 0;
+    }
+
+    .message-bubble p:first-child {
+      margin-top: 0;
+    }
+
+    .message-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-bubble code {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      font-size: 0.875em;
+    }
+
+    .message.user .message-bubble code {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .message-bubble pre {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 0.5em 0;
+    }
+
+    .message.user .message-bubble pre {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .message-bubble pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.875em;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .message-bubble ul,
+    .message-bubble ol {
+      margin: 0.5em 0;
+      padding-left: 1.5em;
+    }
+
+    .message-bubble li {
+      margin: 0.25em 0;
+    }
+
+    .message-bubble blockquote {
+      border-left: 3px solid var(--text-tertiary);
+      padding-left: 0.75rem;
+      margin: 0.5em 0;
+      opacity: 0.9;
+    }
+
+    .message-bubble a {
+      color: inherit;
+      text-decoration: underline;
+      opacity: 0.9;
+    }
+
+    .message-bubble a:hover {
+      opacity: 1;
+    }
+
+    .message-bubble strong {
+      font-weight: 600;
+    }
+
+    .message-bubble em {
+      font-style: italic;
+    }
+
+    .message-bubble hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 0.75em 0;
+    }
+
+    .thinking-block {
+      margin-top: 0.625rem;
+      background: var(--thinking-bg);
+      border: 1px solid #fed7aa;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: #92400e;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .thinking-block .thinking-header {
+      font-weight: 500;
+      padding: 0.625rem 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+      transition: background 0.15s;
+    }
+
+    .thinking-block .thinking-header:hover {
+      background: #fef3c7;
+    }
+
+    .thinking-block .thinking-toggle {
+      margin-left: auto;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    .thinking-block .thinking-content {
+      padding: 0 0.875rem 0.625rem 0.875rem;
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      font-size: 0.8125rem;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .thinking-block.expanded .thinking-content {
+      display: block;
+    }
+
+    .thinking-block.expanded .thinking-toggle::before {
+      content: '▼ ';
+    }
+
+    .thinking-block.collapsed .thinking-toggle::before {
+      content: '▶ ';
+    }
+
+    .thinking-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--warning-color);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .draft-indicator {
+      margin-top: 0.625rem;
+      padding: 0.5rem 0.75rem;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      color: #0c4a6e;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .input-container {
+      padding: 1rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 0.625rem;
+      max-width: 48rem;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 0.875rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.15s;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      resize: none;
+      min-height: 48px;
+      max-height: 200px;
+    }
+
+    #messageInput:focus {
+      border-color: var(--text-tertiary);
+      box-shadow: 0 0 0 3px rgba(171, 104, 255, 0.1);
+    }
+
+    #sendButton {
+      padding: 0.75rem;
+      background: var(--user-message-bg);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    #sendButton:hover:not(:disabled) {
+      background: #1a1a1a;
+      transform: scale(1.05);
+    }
+
+    #sendButton:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    #sendButton:disabled {
+      background: var(--bg-tertiary);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    #sendButton svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 4rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .empty-state h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .typing-indicator .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      background: linear-gradient(135deg, #ab68ff 0%, #8b5cf6 100%);
+      color: white;
+      margin-top: 0.25rem;
+    }
+
+    .typing-indicator-content {
+      background: var(--bot-message-bg);
+      padding: 0.75rem 1rem;
+      border-radius: 1.25rem;
+      border-bottom-left-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-tertiary);
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+      }
+      30% {
+        transform: translateY(-8px);
+        opacity: 1;
+      }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 0.875rem 1.25rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid var(--success-color);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 300px;
+      max-width: 400px;
+      pointer-events: auto;
+      animation: slideIn 0.3s ease-out;
+      font-size: 0.875rem;
+    }
+
+    .toast.error {
+      border-left-color: var(--danger-color);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warning-color);
+    }
+
+    .toast.info {
+      border-left-color: var(--accent-color);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
+    .toast.removing {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        transition: left 0.3s;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .messages {
+        padding: 1.5rem 1rem;
+      }
+
+      .input-container {
+        padding: 0.75rem;
+      }
+
+      .toast-container {
+        left: 1rem;
+        right: 1rem;
+      }
+
+      .toast {
+        min-width: auto;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Hermes Chat</h1>
+      <div class="status disconnected" id="connectionStatus">
+        <span class="status-dot"></span>
+        <span>Connecting...</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="clear-btn" id="clearBtn" title="Clear current chat (Ctrl/Cmd + K)">Clear Chat</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" id="newChatBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3.5V12.5M3.5 8H12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>New Chat</span>
+        </button>
+      </div>
+      <div class="sessions-list" id="sessionsList">
+        <!-- Session items will be dynamically added here -->
+      </div>
+    </div>
+
+    <div class="chat-container">
+      <div class="messages" id="messages">
+        <div class="empty-state">
+          <h2>Welcome to Hermes</h2>
+          <p>Start a conversation by typing a message below</p>
+        </div>
+      </div>
+
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea
+            id="messageInput"
+            placeholder="Message Hermes..."
+            autocomplete="off"
+            rows="1"
+          ></textarea>
+          <button id="sendButton" disabled>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 10L17 3L10 17L8.5 11.5L3 10Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SESSIONS_KEY = 'echolink_sessions';
+    const CURRENT_SESSION_KEY = 'echolink_current_session';
+    const MAX_HISTORY_ITEMS = 100;
+
+    const USER_ID = 'web_user';
+    const USER_NAME = 'I';
+    const TOKEN = 'dev-token';
+    const WS_URL = `ws://${window.location.host}/v1/gateway/connect?token=${TOKEN}`;
+
+    let ws = null;
+    let currentDraftId = null;
+    let currentThinking = null;
+    let currentSessionId = null;
+    let sessions = {};
+
+    const statusEl = document.getElementById('connectionStatus');
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendButton');
+    const clearBtn = document.getElementById('clearBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const sessionsListEl = document.getElementById('sessionsList');
+
+    let hermesConnected = false;
+    let isComposing = false; // Track IME composition state
+
+    // Toast notification system
+    const toastContainer = document.getElementById('toastContainer');
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 3000);
+    }
+
+    // Utility function to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function stripMarkdown(text) {
+      return text
+        .replace(/```[\s\S]*?```/g, '[code]')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/___(.+?)___/g, '$1')
+        .replace(/__(.+?)__/g, '$1')
+        .replace(/_(.+?)_/g, '$1')
+        .replace(/^#{1,6}\s+/gm, '')
+        .replace(/^\s*[-*+]\s+/gm, '')
+        .replace(/^\s*\d+\.\s+/gm, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/^>\s+/gm, '')
+        .replace(/---/g, '')
+        .replace(/\n+/g, ' ')
+        .trim();
+    }
+
+    function parseMarkdown(text) {
+      let html = escapeHtml(text);
+
+      html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre><code class="language-${lang || 'plaintext'}">${code.trim()}</code></pre>`;
+      });
+
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      html = html.replace(/^#{6}\s+(.+)$/gm, '<h6>$1</h6>');
+      html = html.replace(/^#{5}\s+(.+)$/gm, '<h5>$1</h5>');
+      html = html.replace(/^#{4}\s+(.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^#{3}\s+(.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^#{2}\s+(.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^#{1}\s+(.+)$/gm, '<h1>$1</h1>');
+
+      html = html.replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      html = html.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+
+      html = html.replace(/\n\n/g, '</p><p>');
+      html = '<p>' + html + '</p>';
+      html = html.replace(/<p><\/p>/g, '');
+      html = html.replace(/<p>(<(?:pre|ul|h[1-6]|blockquote)>)/g, '$1');
+      html = html.replace(/(<\/(?:pre|ul|h[1-6]|blockquote)>)<\/p>/g, '$1');
+
+      return html;
+    }
+
+    function generateSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function loadSessions() {
+      try {
+        const stored = localStorage.getItem(SESSIONS_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+        return {};
+      }
+    }
+
+    function saveSessions() {
+      try {
+        localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+      } catch (error) {
+        console.error('Failed to save sessions:', error);
+      }
+    }
+
+    function getCurrentSessionId() {
+      let sessionId = localStorage.getItem(CURRENT_SESSION_KEY);
+      if (!sessionId || !sessions[sessionId]) {
+        sessionId = createNewSession();
+      }
+      return sessionId;
+    }
+
+    function setCurrentSession(sessionId) {
+      currentSessionId = sessionId;
+      localStorage.setItem(CURRENT_SESSION_KEY, sessionId);
+      loadSessionMessages(sessionId);
+      renderSessionsList();
+    }
+
+    function createNewSession() {
+      const sessionId = generateSessionId();
+      const chatId = 'chat_web_' + sessionId;
+      sessions[sessionId] = {
+        id: sessionId,
+        chatId: chatId,
+        title: 'New Chat',
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      saveSessions();
+      setCurrentSession(sessionId);
+      return sessionId;
+    }
+
+    function deleteSession(sessionId) {
+      if (Object.keys(sessions).length === 1) {
+        showToast('Cannot delete the last session', 'warning');
+        return;
+      }
+
+      delete sessions[sessionId];
+      saveSessions();
+
+      if (currentSessionId === sessionId) {
+        const remainingSessions = Object.keys(sessions);
+        if (remainingSessions.length > 0) {
+          setCurrentSession(remainingSessions[0]);
+        } else {
+          createNewSession();
+        }
+      } else {
+        renderSessionsList();
+      }
+
+      showToast('Chat deleted', 'info');
+    }
+
+    function startEditingSessionTitle(sessionId) {
+      const session = sessions[sessionId];
+      if (!session) return;
+
+      const titleEl = document.querySelector(`[data-session-title="${sessionId}"]`);
+      if (!titleEl) return;
+
+      const currentTitle = session.title;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'session-title-input';
+      input.value = currentTitle;
+      input.maxLength = 50;
+
+      titleEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const finishEditing = (save) => {
+        const newTitle = input.value.trim();
+
+        if (save && newTitle && newTitle !== currentTitle) {
+          session.title = newTitle;
+          session.updatedAt = Date.now();
+          saveSessions();
+          showToast('Chat renamed', 'info');
+        }
+
+        renderSessionsList();
+      };
+
+      input.addEventListener('blur', () => finishEditing(true));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          finishEditing(true);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          finishEditing(false);
+        }
+      });
+    }
+
+    function updateSessionTitle(sessionId) {
+      const session = sessions[sessionId];
+      if (!session || session.messages.length === 0) return;
+
+      // Use first user message as title
+      const firstUserMsg = session.messages.find(m => m.role === 'user');
+      if (firstUserMsg) {
+        const plainText = stripMarkdown(firstUserMsg.content);
+        session.title = plainText.substring(0, 50);
+        saveSessions();
+        renderSessionsList();
+      }
+    }
+
+    function addMessageToSession(sessionId, message) {
+      if (!sessions[sessionId]) return;
+
+      sessions[sessionId].messages.push({
+        ...message,
+        timestamp: Date.now()
+      });
+
+      // Keep only last MAX_HISTORY_ITEMS messages
+      if (sessions[sessionId].messages.length > MAX_HISTORY_ITEMS) {
+        sessions[sessionId].messages = sessions[sessionId].messages.slice(-MAX_HISTORY_ITEMS);
+      }
+
+      sessions[sessionId].updatedAt = Date.now();
+
+      // Update title if it's the first message
+      if (sessions[sessionId].messages.length === 1) {
+        updateSessionTitle(sessionId);
+      }
+
+      saveSessions();
+    }
+
+    function loadSessionMessages(sessionId) {
+      messagesEl.innerHTML = '';
+
+      const session = sessions[sessionId];
+      if (!session || session.messages.length === 0) {
+        messagesEl.innerHTML = `
+          <div class="empty-state">
+            <h2>👋 Welcome to EchoLink</h2>
+            <p>Start chatting with Hermes Agent</p>
+          </div>
+        `;
+        return;
+      }
+
+      session.messages.forEach(msg => {
+        renderMessage(msg, false); // false = don't save again
+      });
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function clearCurrentSession() {
+      if (!currentSessionId || !sessions[currentSessionId]) return;
+
+      sessions[currentSessionId].messages = [];
+      sessions[currentSessionId].title = 'New Chat';
+      sessions[currentSessionId].updatedAt = Date.now();
+      saveSessions();
+
+      loadSessionMessages(currentSessionId);
+      renderSessionsList();
+    }
+
+    function renderSessionsList() {
+      const sessionArray = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
+
+      sessionsListEl.innerHTML = sessionArray.map(session => {
+        const isActive = session.id === currentSessionId;
+        let preview = 'No messages yet';
+        if (session.messages.length > 0) {
+          const lastMessage = session.messages[session.messages.length - 1];
+          const plainText = stripMarkdown(lastMessage.content);
+          preview = plainText.substring(0, 40);
+        }
+
+        return `
+          <div class="session-item ${isActive ? 'active' : ''}" data-session-id="${session.id}">
+            <div class="session-item-content">
+              <div class="session-item-title" data-session-title="${session.id}">${escapeHtml(session.title)}</div>
+              <div class="session-item-preview">${escapeHtml(preview)}</div>
+            </div>
+            <div class="session-item-actions">
+              <button class="session-item-edit" data-edit-session="${session.id}" title="Rename chat">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 1.5L12.5 4L5 11.5H2.5V9L10 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              ${Object.keys(sessions).length > 1 ? `
+                <button class="session-item-delete" data-delete-session="${session.id}" title="Delete chat">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 3L3 11M3 3L11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers for session items
+      document.querySelectorAll('.session-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          // Don't switch if clicking action buttons
+          if (e.target.closest('.session-item-actions')) {
+            return;
+          }
+
+          const sessionId = item.dataset.sessionId;
+          if (sessionId !== currentSessionId) {
+            setCurrentSession(sessionId);
+          }
+        });
+      });
+
+      // Add click handlers for edit buttons
+      document.querySelectorAll('.session-item-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sessionId = btn.dataset.editSession;
+          startEditingSessionTitle(sessionId);
+        });
+      });
+
+      // Add click handlers for delete buttons
+      document.querySelectorAll('.session-item-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sessionId = btn.dataset.deleteSession;
+          if (confirm('Delete this chat? This cannot be undone.')) {
+            deleteSession(sessionId);
+          }
+        });
+      });
+    }
+
+    // Legacy: Migrate old single-session history to new multi-session format
+    function migrateOldHistory() {
+      const STORAGE_KEY = 'echolink_chat_history';
+      try {
+        const oldHistory = localStorage.getItem(STORAGE_KEY);
+        if (oldHistory && Object.keys(sessions).length === 0) {
+          const messages = JSON.parse(oldHistory);
+          if (messages.length > 0) {
+            const sessionId = generateSessionId();
+            sessions[sessionId] = {
+              id: sessionId,
+              chatId: 'chat_web_default',
+              title: messages[0]?.content?.substring(0, 50) || 'Migrated Chat',
+              messages: messages,
+              createdAt: Date.now() - 1000,
+              updatedAt: Date.now()
+            };
+            saveSessions();
+            localStorage.removeItem(STORAGE_KEY);
+            console.log('Migrated old history to new session format');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to migrate old history:', error);
+      }
+    }
+
+    function connectWebSocket() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected to EchoLink');
+        statusEl.innerHTML = '<span class="status-dot"></span><span>Connected</span>';
+        statusEl.className = 'status connected';
+        autoResizeTextarea(); // Update button state based on input content
+
+        // Check Hermes status
+        checkHermesStatus();
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        statusEl.innerHTML = '<span class="status-dot"></span><span>Disconnected</span>';
+        statusEl.className = 'status disconnected';
+        hermesConnected = false;
+        sendBtn.disabled = true;
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleGatewayEvent(data);
+        } catch (error) {
+          console.error('Failed to parse message:', error);
+        }
+      };
+    }
+
+    // Check Hermes connection status
+    async function checkHermesStatus() {
+      try {
+        const response = await fetch('/health');
+        const data = await response.json();
+
+        const gatewayClients = data.gateway_clients || 0;
+        hermesConnected = gatewayClients > 1; // Web UI + Hermes = 2+ clients
+      } catch (error) {
+        console.error('Failed to check Hermes status:', error);
+      }
+    }
+
+    // Handle gateway events
+    function handleGatewayEvent(event) {
+      console.log('Gateway event:', event);
+
+      if (event.type === 'message.created') {
+        // Check if message belongs to current session
+        const currentSession = sessions[currentSessionId];
+        if (!currentSession || event.chat.id !== currentSession.chatId) {
+          console.log('Ignoring message from different chat:', event.chat.id);
+          return;
+        }
+
+        // Mark Hermes as online when receiving messages from bot
+        if (event.sender.type === 'bot' && !hermesConnected) {
+          hermesConnected = true;
+        }
+
+        // Don't show user's own messages (already displayed optimistically)
+        if (event.sender.type === 'user' && event.sender.id === USER_ID) {
+          return;
+        }
+
+        // Remove draft message if exists
+        if (currentDraftId && event.sender.type === 'bot') {
+          const draftMsg = messagesEl.querySelector(`[data-draft-id="${currentDraftId}"]`);
+          if (draftMsg) {
+            draftMsg.remove();
+          }
+          currentDraftId = null;
+        }
+
+        // Hide typing indicator when bot message arrives
+        if (event.sender.type === 'bot') {
+          hideTypingIndicator();
+        }
+
+        addMessage({
+          role: event.sender.type === 'bot' ? 'bot' : 'user',
+          content: event.message.text,
+          sender: event.sender.name,
+          thinking: currentThinking
+        });
+
+        // Clear thinking after showing message
+        currentThinking = null;
+
+      } else if (event.type === 'message.draft') {
+        handleDraft(event);
+      } else if (event.type === 'thinking') {
+        // Custom thinking event (if implemented)
+        handleThinking(event);
+      }
+    }
+
+    // Handle draft events (streaming)
+    function handleDraft(event) {
+      // Check if draft belongs to current session
+      const currentSession = sessions[currentSessionId];
+      if (!currentSession || event.chat.id !== currentSession.chatId) {
+        console.log('Ignoring draft from different chat:', event.chat.id);
+        return;
+      }
+
+      const draftId = event.draft.id;
+
+      if (draftId !== currentDraftId) {
+        // New draft started - hide typing indicator
+        hideTypingIndicator();
+        currentDraftId = draftId;
+        addDraftMessage(draftId, event.draft.text, event.sender.name, event.draft.thinking);
+      } else {
+        // Update existing draft
+        updateDraftMessage(draftId, event.draft.text, event.draft.thinking);
+      }
+
+      if (event.draft.final) {
+        // Draft is complete, will be replaced by message.created
+        currentDraftId = null;
+      }
+    }
+
+    // Handle thinking events
+    function handleThinking(event) {
+      currentThinking = event.thinking;
+      // Could also show thinking in real-time
+    }
+
+    // Create thinking block with toggle functionality
+    function createThinkingBlock(thinking, isStreaming = false) {
+      const thinkingDiv = document.createElement('div');
+      thinkingDiv.className = 'thinking-block collapsed'; // Start collapsed
+      thinkingDiv.dataset.thinkingBlock = 'true';
+
+      const header = document.createElement('div');
+      header.className = 'thinking-header';
+
+      const spinner = document.createElement('span');
+      if (isStreaming) {
+        spinner.className = 'thinking-spinner';
+      }
+
+      const label = document.createElement('span');
+      label.textContent = 'Thinking';
+
+      const toggle = document.createElement('span');
+      toggle.className = 'thinking-toggle';
+      toggle.textContent = 'Click to expand';
+
+      header.appendChild(spinner);
+      header.appendChild(label);
+      header.appendChild(toggle);
+
+      const thinkingContent = document.createElement('div');
+      thinkingContent.className = 'thinking-content';
+      thinkingContent.textContent = thinking;
+
+      thinkingDiv.appendChild(header);
+      thinkingDiv.appendChild(thinkingContent);
+
+      // Toggle on header click
+      header.addEventListener('click', () => {
+        if (thinkingDiv.classList.contains('collapsed')) {
+          thinkingDiv.classList.remove('collapsed');
+          thinkingDiv.classList.add('expanded');
+          toggle.textContent = 'Click to collapse';
+        } else {
+          thinkingDiv.classList.remove('expanded');
+          thinkingDiv.classList.add('collapsed');
+          toggle.textContent = 'Click to expand';
+        }
+      });
+
+      return thinkingDiv;
+    }
+
+    // Render a message (with optional save to history)
+    function renderMessage({ role, content, sender, thinking }, saveToHistory = true) {
+      // Remove empty state
+      const emptyState = messagesEl.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.remove();
+      }
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = sender ? sender.charAt(0).toUpperCase() : (role === 'bot' ? 'H' : 'U');
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+
+      if (role === 'bot') {
+        bubble.innerHTML = parseMarkdown(content);
+      } else {
+        bubble.textContent = content;
+      }
+
+      contentDiv.appendChild(bubble);
+
+      // Add thinking block if present
+      if (thinking && role === 'bot') {
+        const thinkingDiv = createThinkingBlock(thinking, false); // false = collapsed by default
+        contentDiv.appendChild(thinkingDiv);
+      }
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(contentDiv);
+      messagesEl.appendChild(messageDiv);
+
+      // Save to current session
+      if (saveToHistory && currentSessionId) {
+        addMessageToSession(currentSessionId, { role, content, sender, thinking });
+      }
+
+      // Scroll to bottom
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Add message to chat (wrapper for backward compatibility)
+    function addMessage(messageData) {
+      renderMessage(messageData, true);
+    }
+
+    // Add draft message (streaming)
+    function addDraftMessage(draftId, text, sender, thinking) {
+      const emptyState = messagesEl.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.remove();
+      }
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      messageDiv.dataset.draftId = draftId;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = sender ? sender.charAt(0).toUpperCase() : 'H';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+
+      // Add thinking block if present
+      if (thinking) {
+        const thinkingDiv = createThinkingBlock(thinking, true); // true = streaming (show spinner)
+        contentDiv.appendChild(thinkingDiv);
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+      bubble.innerHTML = parseMarkdown(text);
+
+      const draftIndicator = document.createElement('div');
+      draftIndicator.className = 'draft-indicator';
+      draftIndicator.textContent = '✍️ Typing...';
+
+      contentDiv.appendChild(bubble);
+      contentDiv.appendChild(draftIndicator);
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(contentDiv);
+      messagesEl.appendChild(messageDiv);
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Update draft message
+    function updateDraftMessage(draftId, text, thinking) {
+      const draftMsg = messagesEl.querySelector(`[data-draft-id="${draftId}"]`);
+      if (draftMsg) {
+        const contentDiv = draftMsg.querySelector('.message-content');
+
+        // Update thinking if present
+        if (thinking) {
+          let thinkingDiv = contentDiv.querySelector('[data-thinking-block="true"]');
+          if (!thinkingDiv) {
+            // Create thinking block if it doesn't exist
+            thinkingDiv = createThinkingBlock(thinking, true); // true = streaming
+            // Insert before bubble
+            contentDiv.insertBefore(thinkingDiv, contentDiv.firstChild);
+          } else {
+            // Update existing thinking content
+            const thinkingContent = thinkingDiv.querySelector('.thinking-content');
+            if (thinkingContent) {
+              thinkingContent.textContent = thinking;
+            }
+          }
+        }
+
+        // Update bubble text
+        const bubble = draftMsg.querySelector('.message-bubble');
+        bubble.innerHTML = parseMarkdown(text);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+      // Remove existing typing indicator if present
+      hideTypingIndicator();
+
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'typing-indicator';
+      typingDiv.id = 'typingIndicator';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = 'H';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'typing-indicator-content';
+
+      const dotsContainer = document.createElement('div');
+      dotsContainer.className = 'typing-dots';
+      dotsContainer.innerHTML = '<span></span><span></span><span></span>';
+
+      const text = document.createElement('span');
+      text.textContent = 'Thinking...';
+
+      contentDiv.appendChild(dotsContainer);
+      contentDiv.appendChild(text);
+
+      typingDiv.appendChild(avatar);
+      typingDiv.appendChild(contentDiv);
+
+      messagesEl.appendChild(typingDiv);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Hide typing indicator
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text || !currentSessionId) return;
+
+      const session = sessions[currentSessionId];
+      if (!session) return;
+
+      // Clear input
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      sendBtn.disabled = true;
+
+      // Show user message immediately
+      addMessage({
+        role: 'user',
+        content: text,
+        sender: USER_NAME
+      });
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      try {
+        const response = await fetch(`/v1/chats/${session.chatId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sender_id: USER_ID,
+            sender_name: USER_NAME,
+            text: text,
+            mentions: ['hermes']  // Always mention hermes for web chat
+          })
+        });
+
+        if (!response.ok) {
+          hideTypingIndicator();
+          const errorText = await response.text().catch(() => '');
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        console.log('Message sent successfully');
+      } catch (error) {
+        hideTypingIndicator();
+        console.error('Failed to send message:', error);
+        showToast('Failed to send message: ' + error.message, 'error');
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    // Auto-resize textarea and update send button state
+    function autoResizeTextarea() {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+
+      // Enable/disable send button based on input content
+      const hasContent = inputEl.value.trim().length > 0;
+      const isConnected = ws && ws.readyState === WebSocket.OPEN;
+      sendBtn.disabled = !hasContent || !isConnected;
+    }
+
+    inputEl.addEventListener('input', autoResizeTextarea);
+
+    // Handle IME composition events
+    inputEl.addEventListener('compositionstart', () => {
+      isComposing = true;
+    });
+
+    inputEl.addEventListener('compositionend', () => {
+      isComposing = false;
+    });
+
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    newChatBtn.addEventListener('click', () => {
+      createNewSession();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear current chat? This cannot be undone.')) {
+        clearCurrentSession();
+      }
+    });
+
+    // Keyboard shortcut: Ctrl/Cmd + K to clear current chat
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (confirm('Clear current chat? This cannot be undone.')) {
+          clearCurrentSession();
+        }
+      }
+    });
+
+    // Initialize
+    migrateOldHistory();
+    sessions = loadSessions();
+
+    // Create first session if none exist
+    if (Object.keys(sessions).length === 0) {
+      createNewSession();
+    } else {
+      currentSessionId = getCurrentSessionId();
+      loadSessionMessages(currentSessionId);
+    }
+
+    renderSessionsList();
+    connectWebSocket();
+
+    // Periodically check Hermes status
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        checkHermesStatus();
+      }
+    }, 10000); // Check every 10 seconds
+  </script>
+</body>
+</html>

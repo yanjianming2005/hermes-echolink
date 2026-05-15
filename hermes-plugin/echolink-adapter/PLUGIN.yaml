@@ -1,0 +1,43 @@
+name: echolink
+label: EchoLink
+kind: platform
+version: 0.1.0
+description: EchoLink custom IM platform adapter for Hermes Agent.
+author: Waton
+
+requires_env:
+  - name: ECHOLINK_TOKEN
+    description: EchoLink server bearer token.
+    prompt: EchoLink token
+    password: true
+
+optional_env:
+  - name: ECHOLINK_BASE_URL
+    description: EchoLink server HTTP base URL.
+    prompt: EchoLink base URL
+    password: false
+  - name: ECHOLINK_GATEWAY_URL
+    description: EchoLink WebSocket gateway URL.
+    prompt: EchoLink gateway URL
+    password: false
+  - name: ECHOLINK_HOME_CHANNEL
+    description: Default EchoLink chat for cron delivery.
+    prompt: EchoLink home channel
+    password: false
+  - name: ECHOLINK_ALLOWED_USERS
+    description: Comma-separated EchoLink user IDs allowed to talk to Hermes.
+    prompt: EchoLink allowed users
+    password: false
+  - name: ECHOLINK_ALLOW_ALL_USERS
+    description: Allow all EchoLink users to talk to Hermes.
+    prompt: EchoLink allow all users
+    password: false
+  - name: ECHOLINK_BOT_ID
+    description: EchoLink bot sender ID.
+    prompt: EchoLink bot ID
+    password: false
+  - name: ECHOLINK_BOT_NAME
+    description: EchoLink bot display name.
+    prompt: EchoLink bot name
+    password: false
+
