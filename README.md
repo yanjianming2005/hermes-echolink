@@ -1,6 +1,6 @@
 # Hermes EchoLink
 
-A lightweight WebSocket chat server designed for [Hermes Agent](https://github.com/hermesagent/hermes), providing an IM-like messaging interface with real-time communication.
+A lightweight WebSocket chat server designed for [Hermes Agent](https://github.com/NousResearch/hermes-agent), providing an IM-like messaging interface with real-time communication.
 
 ## Features
 

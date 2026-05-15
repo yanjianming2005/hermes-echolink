@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,8 +77,13 @@
       display: inline-block;
     }
 
-    .status.connected .status-dot { background: var(--success-color); }
-    .status.disconnected .status-dot { background: var(--danger-color); }
+    .status.connected .status-dot {
+      background: var(--success-color);
+    }
+
+    .status.disconnected .status-dot {
+      background: var(--danger-color);
+    }
 
     .header-right {
       display: flex;
@@ -268,33 +274,36 @@
       min-width: 0;
     }
 
-    .messages {
+    .messages-container {
       flex: 1;
       overflow-y: auto;
       padding: 2rem 1rem;
+    }
+
+    .messages-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb:hover {
+      background: var(--text-tertiary);
+    }
+
+    .messages {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
       max-width: 48rem;
       margin: 0 auto;
       width: 100%;
-    }
-
-    .messages::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .messages::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .messages::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 4px;
-    }
-
-    .messages::-webkit-scrollbar-thumb:hover {
-      background: var(--text-tertiary);
     }
 
     .message {
@@ -309,6 +318,7 @@
         opacity: 0;
         transform: translateY(8px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -382,12 +392,29 @@
       font-weight: 600;
     }
 
-    .message-bubble h1 { font-size: 1.5em; }
-    .message-bubble h2 { font-size: 1.3em; }
-    .message-bubble h3 { font-size: 1.1em; }
-    .message-bubble h4 { font-size: 1em; }
-    .message-bubble h5 { font-size: 0.9em; }
-    .message-bubble h6 { font-size: 0.85em; }
+    .message-bubble h1 {
+      font-size: 1.5em;
+    }
+
+    .message-bubble h2 {
+      font-size: 1.3em;
+    }
+
+    .message-bubble h3 {
+      font-size: 1.1em;
+    }
+
+    .message-bubble h4 {
+      font-size: 1em;
+    }
+
+    .message-bubble h5 {
+      font-size: 0.9em;
+    }
+
+    .message-bubble h6 {
+      font-size: 0.85em;
+    }
 
     .message-bubble p {
       margin: 0.5em 0;
@@ -541,7 +568,9 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .draft-indicator {
@@ -566,7 +595,8 @@
 
     .input-wrapper {
       display: flex;
-      gap: 0.625rem;
+      align-items: flex-end;
+      gap: 0.5rem;
       max-width: 48rem;
       margin: 0 auto;
       width: 100%;
@@ -574,7 +604,7 @@
 
     #messageInput {
       flex: 1;
-      padding: 0.875rem 1rem;
+      padding: 0.75rem 1rem;
       border: 1px solid var(--border-color);
       border-radius: 0.75rem;
       font-size: 0.9375rem;
@@ -584,7 +614,7 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       resize: none;
-      min-height: 48px;
+      min-height: 100px;
       max-height: 200px;
     }
 
@@ -594,22 +624,19 @@
     }
 
     #sendButton {
-      padding: 0.75rem;
       background: var(--user-message-bg);
       color: white;
       border: none;
       border-radius: 0.5rem;
-      font-size: 0.9375rem;
-      font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
-      align-self: flex-end;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 40px;
       height: 40px;
       flex-shrink: 0;
+      padding: 0;
     }
 
     #sendButton:hover:not(:disabled) {
@@ -716,10 +743,14 @@
     }
 
     @keyframes typingBounce {
-      0%, 60%, 100% {
+
+      0%,
+      60%,
+      100% {
         transform: translateY(0);
         opacity: 0.5;
       }
+
       30% {
         transform: translateY(-8px);
         opacity: 1;
@@ -772,6 +803,7 @@
         transform: translateX(400px);
         opacity: 0;
       }
+
       to {
         transform: translateX(0);
         opacity: 1;
@@ -783,6 +815,7 @@
         transform: translateX(0);
         opacity: 1;
       }
+
       to {
         transform: translateX(400px);
         opacity: 0;
@@ -828,6 +861,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="toast-container" id="toastContainer"></div>
 
@@ -849,35 +883,31 @@
       <div class="sidebar-header">
         <button class="new-chat-btn" id="newChatBtn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 3.5V12.5M3.5 8H12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 3.5V12.5M3.5 8H12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           <span>New Chat</span>
         </button>
       </div>
       <div class="sessions-list" id="sessionsList">
-        <!-- Session items will be dynamically added here -->
       </div>
     </div>
 
     <div class="chat-container">
-      <div class="messages" id="messages">
-        <div class="empty-state">
-          <h2>Welcome to Hermes</h2>
-          <p>Start a conversation by typing a message below</p>
+      <div class="messages-container">
+        <div class="messages" id="messages">
+          <div class="empty-state">
+            <h2>Welcome to Hermes</h2>
+            <p>Start a conversation by typing a message below</p>
+          </div>
         </div>
       </div>
 
       <div class="input-container">
         <div class="input-wrapper">
-          <textarea
-            id="messageInput"
-            placeholder="Message Hermes..."
-            autocomplete="off"
-            rows="1"
-          ></textarea>
+          <textarea id="messageInput" placeholder="Message Hermes..." autocomplete="off" rows="1"></textarea>
           <button id="sendButton" disabled>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 10L17 3L10 17L8.5 11.5L3 10Z" fill="currentColor"/>
+              <path d="M3 10L17 3L10 17L8.5 11.5L3 10Z" fill="currentColor" />
             </svg>
           </button>
         </div>
@@ -891,7 +921,7 @@
     const MAX_HISTORY_ITEMS = 100;
 
     const USER_ID = 'web_user';
-    const USER_NAME = 'I';
+    const USER_NAME = 'Y';
     const TOKEN = 'dev-token';
     const WS_URL = `ws://${window.location.host}/v1/gateway/connect?token=${TOKEN}`;
 
@@ -903,6 +933,7 @@
 
     const statusEl = document.getElementById('connectionStatus');
     const messagesEl = document.getElementById('messages');
+    const messagesContainerEl = messagesEl.parentElement;
     const inputEl = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendButton');
     const clearBtn = document.getElementById('clearBtn');
@@ -910,9 +941,8 @@
     const sessionsListEl = document.getElementById('sessionsList');
 
     let hermesConnected = false;
-    let isComposing = false; // Track IME composition state
+    let isComposing = false;
 
-    // Toast notification system
     const toastContainer = document.getElementById('toastContainer');
 
     function showToast(message, type = 'info') {
@@ -930,7 +960,6 @@
       }, 3000);
     }
 
-    // Utility function to escape HTML
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -1116,7 +1145,6 @@
       const session = sessions[sessionId];
       if (!session || session.messages.length === 0) return;
 
-      // Use first user message as title
       const firstUserMsg = session.messages.find(m => m.role === 'user');
       if (firstUserMsg) {
         const plainText = stripMarkdown(firstUserMsg.content);
@@ -1134,14 +1162,12 @@
         timestamp: Date.now()
       });
 
-      // Keep only last MAX_HISTORY_ITEMS messages
       if (sessions[sessionId].messages.length > MAX_HISTORY_ITEMS) {
         sessions[sessionId].messages = sessions[sessionId].messages.slice(-MAX_HISTORY_ITEMS);
       }
 
       sessions[sessionId].updatedAt = Date.now();
 
-      // Update title if it's the first message
       if (sessions[sessionId].messages.length === 1) {
         updateSessionTitle(sessionId);
       }
@@ -1167,7 +1193,7 @@
         renderMessage(msg, false); // false = don't save again
       });
 
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesContainerEl.scrollTop = messagesContainerEl.scrollHeight;
     }
 
     function clearCurrentSession() {
@@ -1218,10 +1244,8 @@
         `;
       }).join('');
 
-      // Add click handlers for session items
       document.querySelectorAll('.session-item').forEach(item => {
         item.addEventListener('click', (e) => {
-          // Don't switch if clicking action buttons
           if (e.target.closest('.session-item-actions')) {
             return;
           }
@@ -1233,7 +1257,6 @@
         });
       });
 
-      // Add click handlers for edit buttons
       document.querySelectorAll('.session-item-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1242,7 +1265,6 @@
         });
       });
 
-      // Add click handlers for delete buttons
       document.querySelectorAll('.session-item-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1254,7 +1276,6 @@
       });
     }
 
-    // Legacy: Migrate old single-session history to new multi-session format
     function migrateOldHistory() {
       const STORAGE_KEY = 'echolink_chat_history';
       try {
@@ -1288,9 +1309,8 @@
         console.log('WebSocket connected to EchoLink');
         statusEl.innerHTML = '<span class="status-dot"></span><span>Connected</span>';
         statusEl.className = 'status connected';
-        autoResizeTextarea(); // Update button state based on input content
+        autoResizeTextarea();
 
-        // Check Hermes status
         checkHermesStatus();
       };
 
@@ -1317,25 +1337,22 @@
       };
     }
 
-    // Check Hermes connection status
     async function checkHermesStatus() {
       try {
         const response = await fetch('/health');
         const data = await response.json();
 
         const gatewayClients = data.gateway_clients || 0;
-        hermesConnected = gatewayClients > 1; // Web UI + Hermes = 2+ clients
+        hermesConnected = gatewayClients > 1;
       } catch (error) {
         console.error('Failed to check Hermes status:', error);
       }
     }
 
-    // Handle gateway events
     function handleGatewayEvent(event) {
       console.log('Gateway event:', event);
 
       if (event.type === 'message.created') {
-        // Check if message belongs to current session
         const currentSession = sessions[currentSessionId];
         if (!currentSession || event.chat.id !== currentSession.chatId) {
           console.log('Ignoring message from different chat:', event.chat.id);
@@ -1346,13 +1363,9 @@
         if (event.sender.type === 'bot' && !hermesConnected) {
           hermesConnected = true;
         }
-
-        // Don't show user's own messages (already displayed optimistically)
         if (event.sender.type === 'user' && event.sender.id === USER_ID) {
           return;
         }
-
-        // Remove draft message if exists
         if (currentDraftId && event.sender.type === 'bot') {
           const draftMsg = messagesEl.querySelector(`[data-draft-id="${currentDraftId}"]`);
           if (draftMsg) {
@@ -1360,8 +1373,6 @@
           }
           currentDraftId = null;
         }
-
-        // Hide typing indicator when bot message arrives
         if (event.sender.type === 'bot') {
           hideTypingIndicator();
         }
@@ -1372,21 +1383,16 @@
           sender: event.sender.name,
           thinking: currentThinking
         });
-
-        // Clear thinking after showing message
         currentThinking = null;
 
       } else if (event.type === 'message.draft') {
         handleDraft(event);
       } else if (event.type === 'thinking') {
-        // Custom thinking event (if implemented)
         handleThinking(event);
       }
     }
 
-    // Handle draft events (streaming)
     function handleDraft(event) {
-      // Check if draft belongs to current session
       const currentSession = sessions[currentSessionId];
       if (!currentSession || event.chat.id !== currentSession.chatId) {
         console.log('Ignoring draft from different chat:', event.chat.id);
@@ -1396,31 +1402,24 @@
       const draftId = event.draft.id;
 
       if (draftId !== currentDraftId) {
-        // New draft started - hide typing indicator
         hideTypingIndicator();
         currentDraftId = draftId;
         addDraftMessage(draftId, event.draft.text, event.sender.name, event.draft.thinking);
       } else {
-        // Update existing draft
         updateDraftMessage(draftId, event.draft.text, event.draft.thinking);
       }
 
       if (event.draft.final) {
-        // Draft is complete, will be replaced by message.created
         currentDraftId = null;
       }
     }
 
-    // Handle thinking events
     function handleThinking(event) {
       currentThinking = event.thinking;
-      // Could also show thinking in real-time
     }
-
-    // Create thinking block with toggle functionality
     function createThinkingBlock(thinking, isStreaming = false) {
       const thinkingDiv = document.createElement('div');
-      thinkingDiv.className = 'thinking-block collapsed'; // Start collapsed
+      thinkingDiv.className = 'thinking-block collapsed';
       thinkingDiv.dataset.thinkingBlock = 'true';
 
       const header = document.createElement('div');
@@ -1448,8 +1447,6 @@
 
       thinkingDiv.appendChild(header);
       thinkingDiv.appendChild(thinkingContent);
-
-      // Toggle on header click
       header.addEventListener('click', () => {
         if (thinkingDiv.classList.contains('collapsed')) {
           thinkingDiv.classList.remove('collapsed');
@@ -1465,9 +1462,7 @@
       return thinkingDiv;
     }
 
-    // Render a message (with optional save to history)
     function renderMessage({ role, content, sender, thinking }, saveToHistory = true) {
-      // Remove empty state
       const emptyState = messagesEl.querySelector('.empty-state');
       if (emptyState) {
         emptyState.remove();
@@ -1493,32 +1488,23 @@
       }
 
       contentDiv.appendChild(bubble);
-
-      // Add thinking block if present
       if (thinking && role === 'bot') {
-        const thinkingDiv = createThinkingBlock(thinking, false); // false = collapsed by default
+        const thinkingDiv = createThinkingBlock(thinking, false);
         contentDiv.appendChild(thinkingDiv);
       }
 
       messageDiv.appendChild(avatar);
       messageDiv.appendChild(contentDiv);
       messagesEl.appendChild(messageDiv);
-
-      // Save to current session
       if (saveToHistory && currentSessionId) {
         addMessageToSession(currentSessionId, { role, content, sender, thinking });
       }
-
-      // Scroll to bottom
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesContainerEl.scrollTop = messagesContainerEl.scrollHeight;
     }
 
-    // Add message to chat (wrapper for backward compatibility)
     function addMessage(messageData) {
       renderMessage(messageData, true);
     }
-
-    // Add draft message (streaming)
     function addDraftMessage(draftId, text, sender, thinking) {
       const emptyState = messagesEl.querySelector('.empty-state');
       if (emptyState) {
@@ -1535,10 +1521,8 @@
 
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
-
-      // Add thinking block if present
       if (thinking) {
-        const thinkingDiv = createThinkingBlock(thinking, true); // true = streaming (show spinner)
+        const thinkingDiv = createThinkingBlock(thinking, true);
         contentDiv.appendChild(thinkingDiv);
       }
 
@@ -1557,42 +1541,32 @@
       messageDiv.appendChild(contentDiv);
       messagesEl.appendChild(messageDiv);
 
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesContainerEl.scrollTop = messagesContainerEl.scrollHeight;
     }
 
-    // Update draft message
     function updateDraftMessage(draftId, text, thinking) {
       const draftMsg = messagesEl.querySelector(`[data-draft-id="${draftId}"]`);
       if (draftMsg) {
         const contentDiv = draftMsg.querySelector('.message-content');
-
-        // Update thinking if present
         if (thinking) {
           let thinkingDiv = contentDiv.querySelector('[data-thinking-block="true"]');
           if (!thinkingDiv) {
-            // Create thinking block if it doesn't exist
-            thinkingDiv = createThinkingBlock(thinking, true); // true = streaming
-            // Insert before bubble
+            thinkingDiv = createThinkingBlock(thinking, true);
             contentDiv.insertBefore(thinkingDiv, contentDiv.firstChild);
           } else {
-            // Update existing thinking content
             const thinkingContent = thinkingDiv.querySelector('.thinking-content');
             if (thinkingContent) {
               thinkingContent.textContent = thinking;
             }
           }
         }
-
-        // Update bubble text
         const bubble = draftMsg.querySelector('.message-bubble');
         bubble.innerHTML = parseMarkdown(text);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        messagesContainerEl.scrollTop = messagesContainerEl.scrollHeight;
       }
     }
 
-    // Show typing indicator
     function showTypingIndicator() {
-      // Remove existing typing indicator if present
       hideTypingIndicator();
 
       const typingDiv = document.createElement('div');
@@ -1611,19 +1585,18 @@
       dotsContainer.innerHTML = '<span></span><span></span><span></span>';
 
       const text = document.createElement('span');
-      text.textContent = 'Thinking...';
+      text.textContent = 'Thinking';
 
-      contentDiv.appendChild(dotsContainer);
       contentDiv.appendChild(text);
+      contentDiv.appendChild(dotsContainer);
 
       typingDiv.appendChild(avatar);
       typingDiv.appendChild(contentDiv);
 
       messagesEl.appendChild(typingDiv);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesContainerEl.scrollTop = messagesContainerEl.scrollHeight;
     }
 
-    // Hide typing indicator
     function hideTypingIndicator() {
       const indicator = document.getElementById('typingIndicator');
       if (indicator) {
@@ -1637,13 +1610,9 @@
 
       const session = sessions[currentSessionId];
       if (!session) return;
-
-      // Clear input
       inputEl.value = '';
       inputEl.style.height = 'auto';
       sendBtn.disabled = true;
-
-      // Show user message immediately
       addMessage({
         role: 'user',
         content: text,
@@ -1684,12 +1653,9 @@
       }
     }
 
-    // Auto-resize textarea and update send button state
     function autoResizeTextarea() {
       inputEl.style.height = 'auto';
       inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
-
-      // Enable/disable send button based on input content
       const hasContent = inputEl.value.trim().length > 0;
       const isConnected = ws && ws.readyState === WebSocket.OPEN;
       sendBtn.disabled = !hasContent || !isConnected;
@@ -1697,7 +1663,6 @@
 
     inputEl.addEventListener('input', autoResizeTextarea);
 
-    // Handle IME composition events
     inputEl.addEventListener('compositionstart', () => {
       isComposing = true;
     });
@@ -1706,7 +1671,6 @@
       isComposing = false;
     });
 
-    // Event listeners
     sendBtn.addEventListener('click', sendMessage);
     inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
@@ -1725,7 +1689,6 @@
       }
     });
 
-    // Keyboard shortcut: Ctrl/Cmd + K to clear current chat
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -1735,11 +1698,8 @@
       }
     });
 
-    // Initialize
     migrateOldHistory();
     sessions = loadSessions();
-
-    // Create first session if none exist
     if (Object.keys(sessions).length === 0) {
       createNewSession();
     } else {
@@ -1750,12 +1710,12 @@
     renderSessionsList();
     connectWebSocket();
 
-    // Periodically check Hermes status
     setInterval(() => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         checkHermesStatus();
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
   </script>
 </body>
+
 </html>
